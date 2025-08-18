@@ -1,0 +1,95 @@
+import streamlit as st
+import random
+
+# ---------- Page Setup ----------
+st.set_page_config(page_title="Idioms Memory Game", page_icon="🃏", layout="centered")
+
+st.title("🧠 Memory Card Game: Learn English Idioms!")
+st.caption("Flip cards, match idioms with their meanings, and learn English in a fun way!")
+
+# ---------- Difficulty Levels ----------
+difficulty = st.sidebar.selectbox("Choose Difficulty Level", ["Basic", "Hard", "Difficult"])
+
+# ---------- Idioms Data ----------
+# Format: idiom : meaning
+idioms_data = {
+    "Basic": {
+        "Break the ice": "To start a conversation in a social setting",
+        "Piece of cake": "Something very easy",
+        "Spill the beans": "Reveal a secret",
+        "Under the weather": "Feeling ill",
+        "Hit the sack": "Go to sleep"
+    },
+    "Hard": {
+        "Bite the bullet": "Accept something difficult or unpleasant",
+        "Burn the midnight oil": "Work late into the night",
+        "Cut corners": "Do something the easiest/cheapest way",
+        "Once in a blue moon": "Very rarely happens",
+        "Let the cat out of the bag": "Reveal a secret unintentionally"
+    },
+    "Difficult": {
+        "Throw in the towel": "Give up on something",
+        "Beat around the bush": "Avoid saying something directly",
+        "Kick the bucket": "Die",
+        "The ball is in your court": "It's your decision now",
+        "Barking up the wrong tree": "Blaming or accusing the wrong person"
+    }
+}
+
+# ---------- Game Setup ----------
+if "cards" not in st.session_state:
+    st.session_state.cards = []
+    st.session_state.flipped = []
+    st.session_state.matched = []
+    st.session_state.score = 0
+    st.session_state.moves = 0
+
+def reset_game():
+    idioms = idioms_data[difficulty]
+    # Prepare cards: each idiom appears twice (idiom & meaning)
+    cards = []
+    for idiom, meaning in idioms.items():
+        cards.append({"type":"idiom", "text": idiom})
+        cards.append({"type":"meaning", "text": meaning})
+    random.shuffle(cards)
+    st.session_state.cards = cards
+    st.session_state.flipped = []
+    st.session_state.matched = []
+    st.session_state.score = 0
+    st.session_state.moves = 0
+
+# Initialize first game
+if st.session_state.cards == []:
+    reset_game()
+
+# ---------- Handle card click ----------
+def flip_card(index):
+    if index in st.session_state.flipped or index in st.session_state.matched:
+        return
+    st.session_state.flipped.append(index)
+    if len(st.session_state.flipped) == 2:
+        st.session_state.moves += 1
+        i1, i2 = st.session_state.flipped
+        c1 = st.session_state.cards[i1]
+        c2 = st.session_state.cards[i2]
+        # Check match
+        if (c1["type"] != c2["type"]) and ((c1["type"]=="idiom" and c1["text"] in idioms_data[difficulty] and idioms_data[difficulty][c1["text"]] == c2["text"]) or (c2["type"]=="idiom" and c2["text"] in idioms_data[difficulty] and idioms_data[difficulty][c2["text"]] == c1["text"])):
+            st.session_state.matched.extend([i1, i2])
+            st.session_state.score += 1
+        st.session_state.flipped = []
+
+# ---------- Game Board UI ----------
+cols = st.columns(4)
+for idx, card in enumerate(st.session_state.cards):
+    display_text = "❓"
+    if idx in st.session_state.flipped or idx in st.session_state.matched:
+        display_text = card["text"]
+    if cols[idx % 4].button(display_text, key=f"card_{idx}"):
+        flip_card(idx)
+
+# ---------- Score & Restart ----------
+st.write(f"Score: **{st.session_state.score}** | Moves: **{st.session_state.moves}**")
+if st.session_state.score == len(idioms_data[difficulty]):
+    st.success(f"🎉 Congratulations! You matched all idioms in {st.session_state.moves} moves!")
+if st.button("🔄 Restart Game"):
+    reset_game()
