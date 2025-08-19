@@ -1,11 +1,13 @@
 # ultimate_idioms_game.py
-
 import streamlit as st
 import random
 from PIL import Image
 import time
 from pathlib import Path
 
+# ---------------------------
+# Page Configuration
+# ---------------------------
 st.set_page_config(page_title="Ultimate Idioms Game 🎉", layout="wide")
 
 st.title("🎉 Ultimate Idioms Learning Game 🎉")
@@ -15,14 +17,15 @@ Flip cards, see images, listen to audio, complete stories, and score points. �
 """)
 
 # ---------------------------
-# File Paths
+# File Paths for Images and Audio
 # ---------------------------
-image_folder = Path("images")
-audio_folder = Path("audio")
+image_folder = Path("images")  # Place your idiom images here
+audio_folder = Path("audio")   # Place your idiom audio files here (.mp3)
 
 # ---------------------------
-# Idioms Database
+# Predefined Idioms Database
 # ---------------------------
+# Each idiom has: phrase, idiom answer, image, audio, example sentence
 idioms_data = {
     "Basic": [
         {"phrase": "It's raining ___", "idiom": "cats and dogs", "image": image_folder/"cats_and_dogs.jpg", "audio": audio_folder/"cats_and_dogs.mp3", "story": "It’s raining ___, take your umbrella!"},
@@ -40,13 +43,13 @@ idioms_data = {
 }
 
 # ---------------------------
-# Select Level
+# Level Selection
 # ---------------------------
 level = st.selectbox("Choose Level", ["Basic", "Difficult", "Hard"])
 st.write(f"**Level selected:** {level}")
 
 # ---------------------------
-# Initialize Session State
+# Session State Initialization
 # ---------------------------
 if "score" not in st.session_state or st.session_state.get("level") != level:
     st.session_state.score = 0
@@ -59,7 +62,7 @@ if "leaderboard" not in st.session_state:
 current_idiom = st.session_state.shuffled[st.session_state.current]
 
 # ---------------------------
-# Flip-Flop Card UI
+# Flip-Flop Card Display
 # ---------------------------
 st.subheader("Flip the Card for Hint")
 flip = st.checkbox("Show Image Hint Instead of Phrase?")
@@ -67,6 +70,7 @@ flip = st.checkbox("Show Image Hint Instead of Phrase?")
 card_placeholder = st.empty()
 
 def show_card(flipped=False):
+    """Display either phrase or image based on flip state."""
     if flipped:
         try:
             img = Image.open(current_idiom["image"])
@@ -82,7 +86,7 @@ def show_card(flipped=False):
 show_card(flipped=False if not flip else True)
 
 # ---------------------------
-# Context Story Mode
+# Context Story Hint
 # ---------------------------
 st.subheader("Context Story Hint")
 st.write(current_idiom["story"])
@@ -104,7 +108,7 @@ user_input = st.text_input("Your Guess (Type the missing words)", "")
 progress = st.progress(st.session_state.current / len(st.session_state.shuffled))
 
 # ---------------------------
-# Check Answer
+# Check Answer & Update Score
 # ---------------------------
 if st.button("Check Answer"):
     guess = user_input.lower().strip()
@@ -118,12 +122,12 @@ if st.button("Check Answer"):
         st.error(f"❌ Incorrect! The answer is: **{current_idiom['idiom']}**")
         st.session_state.leaderboard.append((current_idiom["idiom"], "Incorrect"))
     
-    # Animated flip
+    # Animated flip effect
     for i in range(2):
         show_card(flipped=not flip)
         time.sleep(0.3)
     
-    # Move to next idiom or finish
+    # Move to next idiom or finish level
     if st.session_state.current + 1 < len(st.session_state.shuffled):
         st.session_state.current += 1
         user_input = ""
@@ -140,7 +144,7 @@ if st.button("Check Answer"):
             st.session_state.leaderboard = []
 
 # ---------------------------
-# Display Score & Remaining
+# Display Score & Remaining Idioms
 # ---------------------------
 st.write(f"**Current Score:** {st.session_state.score}")
 st.write(f"**Idioms Left:** {len(st.session_state.shuffled) - st.session_state.current}")
